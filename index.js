@@ -1,5 +1,21 @@
-require('dotenv').config();
-const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 10000;
+
+app.get('/', (req, res) => {
+  res.send('AURAMC Official Bot is live and running!');
+});
+
+app.listen(PORT, () => {
+  console.log(`Web server is listening on port ${PORT}`);
+});
+
+// Safely load dotenv if present (for local testing)
+try {
+  require('dotenv').config();
+} catch (e) {}
+
+const { Client, GatewayIntentBits, Collection, REST, Routes, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
 
@@ -15,7 +31,6 @@ const client = new Client({
 client.commands = new Collection();
 const commandsArray = [];
 
-// Read commands directly from single 'commands' folder
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
 
@@ -31,7 +46,7 @@ for (const file of commandFiles) {
   }
 }
 
-client.once('ready', async () => {
+client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag} (v2.0)!`);
 
   const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
