@@ -38,7 +38,7 @@ if (fs.existsSync(commandsPath)) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
-      client.commands.set(command.data.name, command.data);
+      client.commands.set(command.data.name, command);
       commands.push(command.data.toJSON());
     }
   }
@@ -66,17 +66,7 @@ client.once('ready', async () => {
 client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-  let command = null;
-
-  for (const file of commandFiles) {
-    const cmd = require(path.join(commandsPath, file));
-    if (cmd.data && cmd.data.name === interaction.commandName) {
-      command = cmd;
-      break;
-    }
-  }
-
+  const command = client.commands.get(interaction.commandName);
   if (!command) return;
 
   try {
