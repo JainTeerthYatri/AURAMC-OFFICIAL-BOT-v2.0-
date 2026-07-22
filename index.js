@@ -1,110 +1,96 @@
+const { Client, GatewayIntentBits, Collection, REST, Routes } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+require('dotenv').config();
+
+// Express server (Render/UptimeRobot ke liye zaroori hai taaki bot offline na ho)
 const express = require('express');
 const app = express();
-const PORT = process.env.PORT || 10000;
+const PORT = process.env.PORT || 3000;
 
 app.get('/', (req, res) => {
-  res.send('AURAMC Official Bot is live and running!');
+  res.send('AURAMC Bot is Online and Running!');
 });
 
 app.listen(PORT, () => {
-  console.log(`Web server is listening on port ${PORT}`);
+  console.log(`Web server is running on port ${PORT}`);
 });
 
-try {
-  require('dotenv').config();
-} catch (e) {}
-
-const { Client, GatewayIntentBits, Collection, REST, Routes, Events } = require('discord.js');
-const fs = require('fs');
-const path = require('path');
-
+// Discord Client Setup
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent
-  ]
+    GatewayIntentBits.MessageContent,
+  ],
 });
 
 client.commands = new Collection();
-const commandsArray = [];
+const commands = [];
 
+// Commands folder se saari commands load karna
 const commandsPath = path.join(__dirname, 'commands');
 if (fs.existsSync(commandsPath)) {
   const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+
   for (const file of commandFiles) {
     const filePath = path.join(commandsPath, file);
     const command = require(filePath);
     if ('data' in command && 'execute' in command) {
-      client.commands.set(command.data.name, command);
-      commandsArray.push(command.data.toJSON());
+      client.commands.set(command.data.name, command.data);
+      commands.push(command.data.toJSON());
     }
   }
 }
 
-// --- XP System Storage (Simple memory-based) ---
-const levels = {};
+client.once('ready', async () => {
+  console.log(`Logged in as ${client.user.tag}!`);
 
-client.once(Events.ClientReady, async () => {
-  console.log(`Logged in as ${client.user.tag} (v2.0)!`);
+  // Slash commands ko Discord par register karna
+  const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
 
-  if (process.env.BOT_TOKEN && process.env.CLIENT_ID && commandsArray.length > 0) {
-    const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-    try {
-      console.log('Refreshing application (/) commands...');
-      await rest.put(
-        Routes.applicationCommands(process.env.CLIENT_ID),
-        { body: commandsArray },
-      );
-      console.log('Successfully reloaded application (/) commands.');
-    } catch (error) {
-      console.error(error);
-    }
+  try {
+    console.log('Started refreshing application (/) commands.');
+    await rest.put(
+      Routes.applicationCommands(client.user.id),
+      { body: commands },
+    );
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
   }
 });
 
-// XP & Leveling Logic on Every Message
-client.on(Events.MessageCreate, async message => {
-  if (message.author.bot) return;
-
-  const userId = message.author.id;
-  if (!levels[userId]) {
-    levels[userId] = { xp: 0, level: 1 };
-  }
-
-  // Har message par random XP dena (e.g., 15 to 25 XP)
-  const xpToAdd = Math.floor(Math.random() * 11) + 15;
-  levels[userId].xp += xpToAdd;
-
-  // Level up requirement formula: Level * 100 XP
-  const neededXp = levels[userId].level * 100;
-  if (levels[userId].xp >= neededXp) {
-    levels[userId].level += 1;
-    levels[userId].xp = 0;
-    message.channel.endswith?.();
-    message.channel.send(`🎉 Badhai ho ${message.author}, aapka level badh kar **Level ${levels[userId].level}** ho gaya hai!`);
-  }
-});
-
-client.on(Events.InteractionCreate, async interaction => {
+// Interaction (Slash Commands) handler
+client.on('interactionCreate', async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  const command = client.commands.get(interaction.commandName);
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+  let command = null;
+
+  for (const file of commandFiles) {
+    const cmd = require(path.join(commandsPath, file));
+    if (cmd.data && cmd.data.name === interaction.commandName) {
+      command = cmd;
+      break;
+    }
+  }
+
   if (!command) return;
 
   try {
     await command.execute(interaction);
   } catch (error) {
     console.error(error);
+    const errorMessage = { content: 'Command chalane mein koi error aa gaya!', ephemeral: true };
     if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({ content: 'There was an error executing this command!', ephemeral: true });
+      await interaction.followUp(errorMessage);
     } else {
-      await interaction.reply({ content: 'There was an error executing this command!', ephemeral: true });
+      await interaction.reply(errorMessage);
     }
   }
 });
 
-if (process.env.BOT_TOKEN) {
-  client.login(process.env.BOT_TOKEN);
-}
+// Bot Login
+client.login(process.env.DISCORD_TOKEN);
