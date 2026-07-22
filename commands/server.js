@@ -23,7 +23,9 @@ module.exports = {
     const fullAddress = config.fullAddress || `${config.ip}:${config.port || '25565'}`;
 
     try {
-      const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}`);
+      // ?t=... lagane se API caching bypass ho jati hai aur 100% real-time status milta hai
+      const timestamp = new Date().getTime();
+      const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}?t=${timestamp}`);
       const data = await response.json();
 
       const embed = new EmbedBuilder()
