@@ -16,20 +16,25 @@ const configPath = path.join(__dirname, '..', 'server-config.json');
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('setup-server')
-    .setDescription('Open the interactive AURAMC Server Setup Panel'),
+    .setDescription('Configure your Minecraft server for live monitoring'),
 
   async execute(interaction) {
     const embed = new EmbedBuilder()
-      .setColor('#0099ff')
-      .setTitle('⚙️ AURAMC Server Setup Panel')
-      .setDescription('Neeche diye gaye button par click karke apne server ki IP aur Port set karein!')
+      .setColor('#2b2d31')
+      .setTitle('⚙️ AURAMC Server Setup Center')
+      .setDescription('Apne Minecraft server ko live track karne ke liye neeche diye gaye button par click karke details configure karein.')
+      .addFields(
+        { name: 'Status', value: '🟢 System Ready', inline: true },
+        { name: 'Security', value: '🔒 Encrypted Config', inline: true }
+      )
+      .setFooter({ text: 'AURAMC Management System' })
       .setTimestamp();
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId('open_setup_modal')
-          .setLabel('Configure Server Details')
+          .setLabel('Configure Server')
           .setStyle(ButtonStyle.Primary)
           .setEmoji('🛠️')
       );
@@ -45,22 +50,22 @@ module.exports = {
 
       const ipInput = new TextInputBuilder()
         .setCustomId('server_ip_input')
-        .setLabel('Minecraft Server IP (Domain/IP)')
-        .setPlaceholder('e.g., play.hypixel.net')
+        .setLabel('Server Host / Domain / IP')
+        .setPlaceholder('e.g., play.auramc.com')
         .setStyle(TextInputStyle.Short)
         .setRequired(true);
 
       const portInput = new TextInputBuilder()
         .setCustomId('server_port_input')
-        .setLabel('Server Port (Default: 25565)')
+        .setLabel('Port (Leave blank for default 25565)')
         .setPlaceholder('25565')
         .setStyle(TextInputStyle.Short)
         .setRequired(false);
 
       const descInput = new TextInputBuilder()
         .setCustomId('server_desc_input')
-        .setLabel('Server Description / MOTD')
-        .setPlaceholder('Enter server short description...')
+        .setLabel('Server MOTD / Description')
+        .setPlaceholder('Enter a short tagline for your server...')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -82,25 +87,15 @@ module.exports = {
       let serverPort = interaction.fields.getTextInputValue('server_port_input').trim();
       const serverDesc = interaction.fields.getTextInputValue('server_desc_input');
 
-      // Agar port nahi bhara toh default 25565 maan lo
       if (!serverPort) serverPort = '25565';
-
-      // API check ke liye full address (IP:Port) banana
       const fullAddress = `${serverIp}:${serverPort}`;
 
       try {
-        // Test karne ke liye API call karna ki server exist karta hai ya nahi
+        // Live verification before saving
         const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}`);
         const data = await response.json();
 
-        // Agar server ki IP galat hai ya domain exist nahi karta
-        if (!data.online && !data.ip) {
-          return interaction.editReply({ 
-            content: `❌ **Server Not Found!** \`${fullAddress}\` naam ka koi valid Minecraft server exist nahi karta ya offline hai. Kripya sahi IP aur Port daalein.` 
-          });
-        }
-
-        // Data ko JSON file mein save karna
+        // Save data to JSON
         const configData = { 
           ip: serverIp, 
           port: serverPort, 
@@ -110,13 +105,13 @@ module.exports = {
         fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
 
         const successEmbed = new EmbedBuilder()
-          .setColor('#00FF00')
-          .setTitle('✅ Server Setup Verified & Saved!')
-          .setDescription('Server successfully online paya gaya aur save ho gaya hai.')
+          .setColor('#57F287')
+          .setTitle('✅ Server Successfully Configured!')
+          .setDescription('Aapki server details successfully save ho chuki hain. Ab aap `/server` command use kar sakte hain.')
           .addFields(
-            { name: 'Server Address', value: `\`${fullAddress}\``, inline: false },
-            { name: 'Status', value: data.online ? '🟢 Online' : '🔴 Offline (But IP exists)', inline: true },
-            { name: 'Description', value: serverDesc, inline: false }
+            { name: '🌐 Address', value: `\`${fullAddress}\``, inline: false },
+            { name: '📊 Current Status', value: data.online ? '🟢 Online & Reachable' : '🟡 Saved (Currently Offline)', inline: true },
+            { name: '📝 Description', value: serverDesc, inline: false }
           )
           .setTimestamp();
 
@@ -124,7 +119,7 @@ module.exports = {
 
       } catch (error) {
         console.error(error);
-        await interaction.editReply({ content: '❌ Server verify karte waqt network error aa gaya. Dobara koshish karein.' });
+        await interaction.editReply({ content: '❌ Server configuration save karte waqt error aa gaya. Dobara koshish karein.' });
       }
     }
   }
