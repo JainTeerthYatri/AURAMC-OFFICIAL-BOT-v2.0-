@@ -1,14 +1,14 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, AudioPlayerStatus } = require('@discordjs/voice');
-const play = require('play-dl'); // Agar youtube streaming ke liye chahiye, ya direct audio link ke liye
+const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const play = require('play-dl');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play music in your voice channel')
+    .setDescription('Play music instantly')
     .addStringOption(option =>
       option.setName('song')
-        .setDescription('Song name or URL')
+        .setDescription('SoundCloud link or Song name')
         .setRequired(true)),
   
   async execute(interaction) {
@@ -19,30 +19,36 @@ module.exports = {
       return interaction.editReply({ content: '❌ Aapko pehle kisi Voice Channel se connect hona padega!' });
     }
 
-    const permissions = voiceChannel.permissionsFor(interaction.client.user);
-    if (!permissions.has('Connect') || !permissions.has('Speak')) {
-      return interaction.editReply({ content: '❌ Mujhe is voice channel mein connect hone aur bolne ki permission chahiye!' });
-    }
-
     const query = interaction.options.getString('song');
 
     try {
-      // Voice channel join karna
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: interaction.guild.id,
         adapterCreator: interaction.guild.voiceAdapterCreator,
       });
 
-      // Simple placeholder response jab tak track search/stream ho raha ho
-      await interaction.editReply({ content: `🎵 Searching and playing: **${query}**` });
+      // YouTube ke bajaye SoundCloud search ya direct stream use karna zyada fast hota hai
+      let streamData = await play.search(query, { limit: 1, source: { soundcloud: 'tracks' } });
+      
+      if (!streamData || streamData.length === 0) {
+        return interaction.editReply({ content: '❌ Koi song nahi mila! Kripya SoundCloud ka direct link dein.' });
+      }
 
-      // Note: Full YouTube stream ke liye play-dl ya similar package ka use kiya jata hai. 
-      // Aap bataiye kya aapko isme direct audio stream / search integration bhi add karni hai?
+      const songUrl = streamData[0].url;
+      const stream = await play.stream(songUrl);
+      
+      const resource = createAudioResource(stream.stream, { inputType: stream.type });
+      const player = createAudioPlayer();
+
+      player.play(resource);
+      connection.subscribe(player);
+
+      await interaction.editReply({ content: f`🎶 Now Playing: **${streamData[0].title}**` });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: '❌ Music play karne mein kuch error aa gaya!' });
+      await interaction.editReply({ content: '❌ Song play karne mein error aa gaya. Kripya doosra song try karein.' });
     }
   },
 };
