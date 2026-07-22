@@ -12,19 +12,18 @@ module.exports = {
   async execute(interaction) {
     await interaction.deferReply();
 
-    // Check karna ki server setup kiya gaya hai ya nahi
     if (!fs.existsSync(configPath)) {
       return interaction.editReply({ 
-        content: '❌ Pehle `/setup-server` command ka use karke server ki IP set karein!' 
+        content: '❌ Pehle `/setup-server` command ka use karke server ki IP aur Port set karein!' 
       });
     }
 
     const rawData = fs.readFileSync(configPath);
     const config = JSON.parse(rawData);
-    const serverIp = config.ip;
+    const fullAddress = config.fullAddress || `${config.ip}:${config.port || '25565'}`;
 
     try {
-      const response = await fetch(`https://api.mcsrvstat.us/3/${serverIp}`);
+      const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}`);
       const data = await response.json();
 
       const embed = new EmbedBuilder()
@@ -32,8 +31,8 @@ module.exports = {
         .setTitle('⛏️ AURAMC Server Live Status')
         .setDescription(config.description || 'No description provided')
         .addFields(
-          { name: 'Server IP', value: `\`${serverIp}\``, inline: false },
-          { name: 'Status', value: data.online ? '🟢 Online' : '🔴 Offline', inline: true },
+          { name: 'Server Address', value: `\`${fullAddress}\``, inline: false },
+          { name: 'Status', value: data.online ? '🟢 Online' : '🔴 Offline / Unreachable', inline: true },
           { name: 'Players Online', value: data.online ? `${data.players.online} / ${data.players.max}` : 'N/A', inline: true },
           { name: 'Version', value: data.version || 'Unknown', inline: true }
         )
