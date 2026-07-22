@@ -1,13 +1,42 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const net = require('net');
 
 const configPath = path.join(__dirname, '..', 'server-config.json');
+
+// Direct TCP socket se server check karne ka function (No Caching, 100% Real-time)
+function checkMinecraftServer(host, port, timeout = 3000) {
+  return new Promise((resolve) => {
+    const socket = new net.Socket();
+    let isConnected = false;
+
+    socket.setTimeout(timeout);
+
+    socket.on('connect', () => {
+      isConnected = true;
+      socket.destroy();
+      resolve(true); // Server is Online
+    });
+
+    socket.on('timeout', () => {
+      socket.destroy();
+      resolve(false); // Timeout -> Offline
+    });
+
+    socket.on('error', () => {
+      socket.destroy();
+      resolve(false); // Error/Refused -> Offline
+    });
+
+    socket.connect(port, host);
+  });
+}
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('server')
-    .setDescription('Display professional live status of the AURAMC server'),
+    .setDescription('Check professional live status of the AURAMC server'),
 
   async execute(interaction) {
     await interaction.deferReply();
@@ -20,42 +49,25 @@ module.exports = {
 
     const rawData = fs.readFileSync(configPath);
     const config = JSON.parse(rawData);
-    const fullAddress = config.fullAddress || `${config.ip}:${config.port || '25565'}`;
+    const host = config.ip;
+    const port = parseInt(config.port || '25565');
+    const fullAddress = `${host}:${port}`;
 
     try {
-      // Unique random string aur timestamp taaki API caching 100% bypass ho jaye
-      const cacheBuster = `nocache=${Date.now()}_${Math.random()}`;
-      const url = `https://api.mcsrvstat.us/3/${fullAddress}?${cacheBuster}`;
+      // Direct network ping (Bina kisi API ke)
+      const isOnline = await checkMinecraftServer(host, port);
 
-      // Force fetch without cache headers
-      const response = await fetch(url, {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-        cache: 'no-store'
-      });
-      
-      const data = await response.json();
-
-      if (!data) {
-        throw new Error('Invalid API Response');
-      }
-
-      if (data.online) {
+      if (isOnline) {
         const onlineEmbed = new EmbedBuilder()
           .setColor('#57F287')
           .setTitle('🟢 AURAMC Server Status : ONLINE')
-          .setDescription(`> *${config.description || data.motd?.clean?.[0] || 'No description available'}*`)
+          .setDescription(`> *${config.description || 'Server is up and running!'}*`)
           .addFields(
             { name: '🔗 Server Address', value: `\`${fullAddress}\``, inline: true },
-            { name: '👥 Active Players', value: `\`${data.players.online} / ${data.players.max}\``, inline: true },
-            { name: '⚙️ Game Version', value: `\`${data.version || 'Unknown'}\``, inline: true },
-            { name: '🛡️ Software', value: `\`${data.software || 'Vanilla/Custom'}\``, inline: true }
+            { name: '📡 Connection Status', value: '`Reachable / Open`', inline: true },
+            { name: '⚡ Host State', value: '`Operational`', inline: true }
           )
-          .setThumbnail(`https://api.mcsrvstat.us/icon/${config.ip}`)
-          .setFooter({ text: 'AURAMC Live Telemetry • Real-time Monitoring', iconURL: interaction.client.user.displayAvatarURL() })
+          .setFooter({ text: 'AURAMC Direct Telemetry • Real-time TCP Ping', iconURL: interaction.client.user.displayAvatarURL() })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [onlineEmbed] });
@@ -63,12 +75,12 @@ module.exports = {
         const offlineEmbed = new EmbedBuilder()
           .setColor('#ED4245')
           .setTitle('🔴 AURAMC Server Status : OFFLINE')
-          .setDescription('Server is currently offline or unreachable over the public network.')
+          .setDescription('Server is currently offline, stopped, or unreachable.')
           .addFields(
             { name: '🔗 Server Address', value: `\`${fullAddress}\``, inline: false },
-            { name: '🛠️ Troubleshooting', value: 'Check if your server software is running and accessible.', inline: false }
+            { name: '🛠️ Note', value: 'TCP connection failed. Server band hai ya port band hai.', inline: false }
           )
-          .setFooter({ text: 'AURAMC Live Telemetry • Real-time Monitoring', iconURL: interaction.client.user.displayAvatarURL() })
+          .setFooter({ text: 'AURAMC Direct Telemetry • Real-time TCP Ping', iconURL: interaction.client.user.displayAvatarURL() })
           .setTimestamp();
 
         await interaction.editReply({ embeds: [offlineEmbed] });
@@ -76,13 +88,7 @@ module.exports = {
 
     } catch (error) {
       console.error(error);
-      const errorEmbed = new EmbedBuilder()
-        .setColor('#FEE75C')
-        .setTitle('⚠️ Status Check Warning')
-        .setDescription('Server se connection establish karne mein samasya aa rahi hai.')
-        .setTimestamp();
-
-      await interaction.editReply({ embeds: [errorEmbed] });
+      await interaction.editReply({ content: '❌ Status check karne mein koi technical error aa gaya.' });
     }
   },
 };
