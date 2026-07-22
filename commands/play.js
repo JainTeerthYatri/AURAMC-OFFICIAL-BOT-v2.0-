@@ -1,29 +1,25 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType } = require('@discordjs/voice');
+const play = require('play-dl');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play 24/7 Lo-Fi and Chill Radio Stations instantly')
+    .setDescription('Play a song from a direct link')
     .addStringOption(option =>
-      option.setName('station')
-        .setDescription('Choose a music station')
-        .setRequired(true)
-        .addChoices(
-          { name: 'Lo-Fi Beats (Chill/Study)', value: 'https://stream.zeno.fm/f3wvbbqmdg8uv' },
-          { name: 'Synthwave Radio', value: 'https://stream.zeno.fm/ep3rmqbcwy8uv' },
-          { name: 'Relaxing Piano', value: 'https://stream.zeno.fm/004z6vtwgg8uv' }
-        )),
+      option.setName('link')
+        .setDescription('Direct YouTube or Audio stream URL')
+        .setRequired(true)),
   
   async execute(interaction) {
     await interaction.deferReply();
 
     const voiceChannel = interaction.member.voice.channel;
     if (!voiceChannel) {
-      return interaction.editReply({ content: '❌ Aapko pehle kisi Voice Channel se connect hona padega!' });
+      return interaction.editReply({ content: '❌ Pehle kisi Voice Channel se connect ho jao!' });
     }
 
-    const stationUrl = interaction.options.getString('station');
+    const url = interaction.options.getString('link');
 
     try {
       const connection = joinVoiceChannel({
@@ -32,17 +28,21 @@ module.exports = {
         adapterCreator: interaction.guild.voiceAdapterCreator,
       });
 
-      const resource = createAudioResource(stationUrl);
-      const player = createAudioPlayer();
+      // Stream fetch karna play-dl ke through
+      let streamData = await play.stream(url);
+      let resource = createAudioResource(streamData.stream, { 
+        inputType: streamData.type 
+      });
 
+      let player = createAudioPlayer();
       player.play(resource);
       connection.subscribe(player);
 
-      await interaction.editReply({ content: `🎶 Non-stop Radio station successfully connected and playing!` });
+      await interaction.editReply({ content: `🎶 Music successfully play ho raha hai!` });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: '❌ Radio play karne mein kuch error aa gaya.' });
+      await interaction.editReply({ content: '❌ Song play karne mein error aaya. Kripya koi aur valid direct link try karein.' });
     }
   },
 };
