@@ -8,6 +8,10 @@ const {
   TextInputStyle, 
   EmbedBuilder 
 } = require('discord.js');
+const fs = require('fs');
+const path = require('path');
+
+const configPath = path.join(__dirname, '..', 'server-config.json');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -18,18 +22,14 @@ module.exports = {
     const embed = new EmbedBuilder()
       .setColor('#0099ff')
       .setTitle('⚙️ AURAMC Server Setup Panel')
-      .setDescription('Neeche diye gaye button par click karke apne server ki details update karein!')
-      .addFields(
-        { name: 'Status', value: '🟢 Panel Active', inline: true },
-        { name: 'Managed By', value: interaction.user.tag, inline: true }
-      )
+      .setDescription('Neeche diye gaye button par click karke apne server ki IP update karein!')
       .setTimestamp();
 
     const row = new ActionRowBuilder()
       .addComponents(
         new ButtonBuilder()
           .setCustomId('open_setup_modal')
-          .setLabel('Configure Server Info')
+          .setLabel('Configure Server IP')
           .setStyle(ButtonStyle.Primary)
           .setEmoji('🛠️')
       );
@@ -37,7 +37,6 @@ module.exports = {
     await interaction.reply({ embeds: [embed], components: [row], ephemeral: true });
   },
 
-  // Jab user button par click karega toh Modal (Popup Form) khulega
   async handleButton(interaction) {
     if (interaction.customId === 'open_setup_modal') {
       const modal = new ModalBuilder()
@@ -54,7 +53,7 @@ module.exports = {
       const descInput = new TextInputBuilder()
         .setCustomId('server_desc_input')
         .setLabel('Server Description / MOTD')
-        .setPlaceholder('Enter your server short description...')
+        .setPlaceholder('Enter server short description...')
         .setStyle(TextInputStyle.Paragraph)
         .setRequired(true);
 
@@ -67,20 +66,20 @@ module.exports = {
     }
   },
 
-  // Jab user form (Modal) submit karega
   async handleModal(interaction) {
     if (interaction.customId === 'server_setup_modal') {
       const serverIp = interaction.fields.getTextInputValue('server_ip_input');
       const serverDesc = interaction.fields.getTextInputValue('server_desc_input');
 
-      // Aap yahan chahe toh ise database ya file mein save kar sakte hain
-      // Filhal hum success message dikha rahe hain
+      // Data ko JSON file mein save karna
+      const configData = { ip: serverIp, description: serverDesc };
+      fs.writeFileSync(configPath, JSON.stringify(configData, null, 2));
 
       const successEmbed = new EmbedBuilder()
         .setColor('#00FF00')
         .setTitle('✅ Server Setup Saved Successfully!')
         .addFields(
-          { name: 'Server IP', value: `\`${serverIp}\``, inline: false },
+          { name: 'Saved Server IP', value: `\`${serverIp}\``, inline: false },
           { name: 'Description', value: serverDesc, inline: false }
         )
         .setTimestamp();
