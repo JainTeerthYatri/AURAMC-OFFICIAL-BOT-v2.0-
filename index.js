@@ -62,18 +62,32 @@ client.once('ready', async () => {
   }
 });
 
-// Interaction (Slash Commands) handler
+// Interaction (Slash Commands, Buttons & Modals) handler
 client.on('interactionCreate', async interaction => {
-  if (!interaction.isChatInputCommand()) return;
-
-  const command = client.commands.get(interaction.commandName);
-  if (!command) return;
-
   try {
-    await command.execute(interaction);
+    if (interaction.isChatInputCommand()) {
+      const command = client.commands.get(interaction.commandName);
+      if (!command) return;
+
+      await command.execute(interaction);
+    } 
+    else if (interaction.isButton()) {
+      // Buttons handle karne ke liye (Jaise Setup Panel)
+      const command = client.commands.get('setup-server');
+      if (command && command.handleButton) {
+        await command.handleButton(interaction);
+      }
+    } 
+    else if (interaction.isModalSubmit()) {
+      // Modals (Forms) handle karne ke liye
+      const command = client.commands.get('setup-server');
+      if (command && command.handleModal) {
+        await command.handleModal(interaction);
+      }
+    }
   } catch (error) {
     console.error(error);
-    const errorMessage = { content: 'Command chalane mein koi error aa gaya!', ephemeral: true };
+    const errorMessage = { content: 'Interaction execute karne mein koi error aa gaya!', ephemeral: true };
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp(errorMessage);
     } else {
