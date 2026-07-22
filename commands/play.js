@@ -1,25 +1,28 @@
 const { SlashCommandBuilder } = require('discord.js');
-const { joinVoiceChannel, createAudioPlayer, createAudioResource, StreamType } = require('@discordjs/voice');
-const play = require('play-dl');
+const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play a song from a direct link')
+    .setDescription('Play non-stop chill lo-fi music instantly')
     .addStringOption(option =>
-      option.setName('link')
-        .setDescription('Direct YouTube or Audio stream URL')
-        .setRequired(true)),
+      option.setName('genre')
+        .setDescription('Select music type')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Lo-Fi Chill Beats', value: 'https://stream.zeno.fm/f3wvbbqmdg8uv' },
+          { name: 'Synthwave Radio', value: 'https://stream.zeno.fm/ep3rmqbcwy8uv' }
+        )),
   
   async execute(interaction) {
     await interaction.deferReply();
 
     const voiceChannel = interaction.member.voice.channel;
     if (!voiceChannel) {
-      return interaction.editReply({ content: '❌ Pehle kisi Voice Channel se connect ho jao!' });
+      return interaction.editReply({ content: '❌ Pehle kisi Voice Channel se connect ho jao bhai!' });
     }
 
-    const url = interaction.options.getString('link');
+    const streamUrl = interaction.options.getString('genre');
 
     try {
       const connection = joinVoiceChannel({
@@ -28,21 +31,17 @@ module.exports = {
         adapterCreator: interaction.guild.voiceAdapterCreator,
       });
 
-      // Stream fetch karna play-dl ke through
-      let streamData = await play.stream(url);
-      let resource = createAudioResource(streamData.stream, { 
-        inputType: streamData.type 
-      });
+      const resource = createAudioResource(streamUrl);
+      const player = createAudioPlayer();
 
-      let player = createAudioPlayer();
       player.play(resource);
       connection.subscribe(player);
 
-      await interaction.editReply({ content: `🎶 Music successfully play ho raha hai!` });
+      await interaction.editReply({ content: '🎶 Music successfully connect ho gaya hai aur play ho raha hai!' });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: '❌ Song play karne mein error aaya. Kripya koi aur valid direct link try karein.' });
+      await interaction.editReply({ content: '❌ Kuch gadbad ho gayi, dubara try karo.' });
     }
   },
 };
