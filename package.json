@@ -11,8 +11,5 @@
     "discord.js": "^14.27.0",
     "dotenv": "^17.4.2",
     "express": "^4.21.2"
-  },
-  "overrides": {
-    "undici": "^6.20.0"
   }
 }
