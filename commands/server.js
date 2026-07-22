@@ -20,30 +20,35 @@ module.exports = {
 
     const rawData = fs.readFileSync(configPath);
     const config = JSON.parse(rawData);
-    const fullAddress = config.fullAddress || `${config.ip}:${config.port || '25565'}`;
+    const serverIp = config.ip;
+    const serverPort = config.port || '25565';
 
     try {
-      // ?t=... lagane se API caching bypass ho jati hai aur 100% real-time status milta hai
-      const timestamp = new Date().getTime();
-      const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}?t=${timestamp}`);
+      // Ab hum mcapi.us use kar rahe hain jo bohot fast aur accurate hai
+      const response = await fetch(`https://mcapi.us/server/status?ip=${serverIp}&port=${serverPort}`);
       const data = await response.json();
+
+      // Agar API se connection mein koi dikkat aaye
+      if (!data || typeof data.online === 'undefined') {
+        return interaction.editReply({ content: '❌ Server se data fetch nahi ho paya. IP ya Port check karein.' });
+      }
 
       const embed = new EmbedBuilder()
         .setColor(data.online ? '#00FF00' : '#FF0000')
         .setTitle('⛏️ AURAMC Server Live Status')
         .setDescription(config.description || 'No description provided')
         .addFields(
-          { name: 'Server Address', value: `\`${fullAddress}\``, inline: false },
+          { name: 'Server Address', value: `\`${serverIp}:${serverPort}\``, inline: false },
           { name: 'Status', value: data.online ? '🟢 Online' : '🔴 Offline / Unreachable', inline: true },
-          { name: 'Players Online', value: data.online ? `${data.players.online} / ${data.players.max}` : 'N/A', inline: true },
-          { name: 'Version', value: data.version || 'Unknown', inline: true }
+          { name: 'Players Online', value: data.online ? `${data.players.now} / ${data.players.max}` : 'N/A', inline: true },
+          { name: 'Version', value: data.server?.name || 'Unknown', inline: true }
         )
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: '❌ Server status fetch karne mein error aa gaya.' });
+      await interaction.editReply({ content: '❌ Server status check karte waqt koi error aa gaya.' });
     }
   },
 };
