@@ -1,15 +1,19 @@
 const { SlashCommandBuilder } = require('discord.js');
 const { joinVoiceChannel, createAudioPlayer, createAudioResource } = require('@discordjs/voice');
-const play = require('play-dl');
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
-    .setDescription('Play music instantly')
+    .setDescription('Play 24/7 Lo-Fi and Chill Radio Stations instantly')
     .addStringOption(option =>
-      option.setName('song')
-        .setDescription('SoundCloud link or Song name')
-        .setRequired(true)),
+      option.setName('station')
+        .setDescription('Choose a music station')
+        .setRequired(true)
+        .addChoices(
+          { name: 'Lo-Fi Beats (Chill/Study)', value: 'https://stream.zeno.fm/f3wvbbqmdg8uv' },
+          { name: 'Synthwave Radio', value: 'https://stream.zeno.fm/ep3rmqbcwy8uv' },
+          { name: 'Relaxing Piano', value: 'https://stream.zeno.fm/004z6vtwgg8uv' }
+        )),
   
   async execute(interaction) {
     await interaction.deferReply();
@@ -19,7 +23,7 @@ module.exports = {
       return interaction.editReply({ content: '❌ Aapko pehle kisi Voice Channel se connect hona padega!' });
     }
 
-    const query = interaction.options.getString('song');
+    const stationUrl = interaction.options.getString('station');
 
     try {
       const connection = joinVoiceChannel({
@@ -28,27 +32,17 @@ module.exports = {
         adapterCreator: interaction.guild.voiceAdapterCreator,
       });
 
-      // YouTube ke bajaye SoundCloud search ya direct stream use karna zyada fast hota hai
-      let streamData = await play.search(query, { limit: 1, source: { soundcloud: 'tracks' } });
-      
-      if (!streamData || streamData.length === 0) {
-        return interaction.editReply({ content: '❌ Koi song nahi mila! Kripya SoundCloud ka direct link dein.' });
-      }
-
-      const songUrl = streamData[0].url;
-      const stream = await play.stream(songUrl);
-      
-      const resource = createAudioResource(stream.stream, { inputType: stream.type });
+      const resource = createAudioResource(stationUrl);
       const player = createAudioPlayer();
 
       player.play(resource);
       connection.subscribe(player);
 
-      await interaction.editReply({ content: f`🎶 Now Playing: **${streamData[0].title}**` });
+      await interaction.editReply({ content: `🎶 Non-stop Radio station successfully connected and playing!` });
 
     } catch (error) {
       console.error(error);
-      await interaction.editReply({ content: '❌ Song play karne mein error aa gaya. Kripya doosra song try karein.' });
+      await interaction.editReply({ content: '❌ Radio play karne mein kuch error aa gaya.' });
     }
   },
 };
