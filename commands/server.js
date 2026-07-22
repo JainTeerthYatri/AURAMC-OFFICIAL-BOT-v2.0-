@@ -23,9 +23,20 @@ module.exports = {
     const fullAddress = config.fullAddress || `${config.ip}:${config.port || '25565'}`;
 
     try {
-      // Cache buster timestamp ke sath high precision fetch
-      const timestamp = Date.now();
-      const response = await fetch(`https://api.mcsrvstat.us/3/${fullAddress}?t=${timestamp}`);
+      // Unique random string aur timestamp taaki API caching 100% bypass ho jaye
+      const cacheBuster = `nocache=${Date.now()}_${Math.random()}`;
+      const url = `https://api.mcsrvstat.us/3/${fullAddress}?${cacheBuster}`;
+
+      // Force fetch without cache headers
+      const response = await fetch(url, {
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
+        },
+        cache: 'no-store'
+      });
+      
       const data = await response.json();
 
       if (!data) {
@@ -33,18 +44,15 @@ module.exports = {
       }
 
       if (data.online) {
-        // Online Professional Embed
         const onlineEmbed = new EmbedBuilder()
-          .setColor('#57F287') // Discord Green
+          .setColor('#57F287')
           .setTitle('🟢 AURAMC Server Status : ONLINE')
           .setDescription(`> *${config.description || data.motd?.clean?.[0] || 'No description available'}*`)
           .addFields(
             { name: '🔗 Server Address', value: `\`${fullAddress}\``, inline: true },
             { name: '👥 Active Players', value: `\`${data.players.online} / ${data.players.max}\``, inline: true },
             { name: '⚙️ Game Version', value: `\`${data.version || 'Unknown'}\``, inline: true },
-            { name: '🛡️ Software / Protocol', value: `\`${data.software || 'Vanilla/Custom'}\``, inline: true },
-            { name: '📡 Connection Latency', value: '`Stable`', inline: true },
-            { name: '⚡ Host Status', value: '`Operational`', inline: true }
+            { name: '🛡️ Software', value: `\`${data.software || 'Vanilla/Custom'}\``, inline: true }
           )
           .setThumbnail(`https://api.mcsrvstat.us/icon/${config.ip}`)
           .setFooter({ text: 'AURAMC Live Telemetry • Real-time Monitoring', iconURL: interaction.client.user.displayAvatarURL() })
@@ -52,14 +60,13 @@ module.exports = {
 
         await interaction.editReply({ embeds: [onlineEmbed] });
       } else {
-        // Offline Professional Embed
         const offlineEmbed = new EmbedBuilder()
-          .setColor('#ED4245') // Discord Red
+          .setColor('#ED4245')
           .setTitle('🔴 AURAMC Server Status : OFFLINE')
           .setDescription('Server is currently offline or unreachable over the public network.')
           .addFields(
             { name: '🔗 Server Address', value: `\`${fullAddress}\``, inline: false },
-            { name: '🛠️ Troubleshooting', value: 'Check if your host/server software is running and port forwarding is active.', inline: false }
+            { name: '🛠️ Troubleshooting', value: 'Check if your server software is running and accessible.', inline: false }
           )
           .setFooter({ text: 'AURAMC Live Telemetry • Real-time Monitoring', iconURL: interaction.client.user.displayAvatarURL() })
           .setTimestamp();
@@ -72,7 +79,7 @@ module.exports = {
       const errorEmbed = new EmbedBuilder()
         .setColor('#FEE75C')
         .setTitle('⚠️ Status Check Warning')
-        .setDescription('Server se connection establish karne mein samasya aa rahi hai. Kripya baad mein prayas karein.')
+        .setDescription('Server se connection establish karne mein samasya aa rahi hai.')
         .setTimestamp();
 
       await interaction.editReply({ embeds: [errorEmbed] });
