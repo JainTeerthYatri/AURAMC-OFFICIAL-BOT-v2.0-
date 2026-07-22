@@ -10,7 +10,6 @@ app.listen(PORT, () => {
   console.log(`Web server is listening on port ${PORT}`);
 });
 
-// Safely load dotenv if present (for local testing)
 try {
   require('dotenv').config();
 } catch (e) {}
@@ -32,37 +31,63 @@ client.commands = new Collection();
 const commandsArray = [];
 
 const commandsPath = path.join(__dirname, 'commands');
-const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-
-for (const file of commandFiles) {
-  const filePath = path.join(commandsPath, file);
-  const command = require(filePath);
-  
-  if ('data' in command && 'execute' in command) {
-    client.commands.set(command.data.name, command);
-    commandsArray.push(command.data.toJSON());
-  } else {
-    console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+if (fs.existsSync(commandsPath)) {
+  const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    if ('data' in command && 'execute' in command) {
+      client.commands.set(command.data.name, command);
+      commandsArray.push(command.data.toJSON());
+    }
   }
 }
+
+// --- XP System Storage (Simple memory-based) ---
+const levels = {};
 
 client.once(Events.ClientReady, async () => {
   console.log(`Logged in as ${client.user.tag} (v2.0)!`);
 
-  const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
-  try {
-    console.log('Refreshing application (/) commands...');
-    await rest.put(
-      Routes.applicationCommands(process.env.CLIENT_ID),
-      { body: commandsArray },
-    );
-    console.log('Successfully reloaded application (/) commands.');
-  } catch (error) {
-    console.error(error);
+  if (process.env.BOT_TOKEN && process.env.CLIENT_ID && commandsArray.length > 0) {
+    const rest = new REST({ version: '10' }).setToken(process.env.BOT_TOKEN);
+    try {
+      console.log('Refreshing application (/) commands...');
+      await rest.put(
+        Routes.applicationCommands(process.env.CLIENT_ID),
+        { body: commandsArray },
+      );
+      console.log('Successfully reloaded application (/) commands.');
+    } catch (error) {
+      console.error(error);
+    }
   }
 });
 
-client.on('interactionCreate', async interaction => {
+// XP & Leveling Logic on Every Message
+client.on(Events.MessageCreate, async message => {
+  if (message.author.bot) return;
+
+  const userId = message.author.id;
+  if (!levels[userId]) {
+    levels[userId] = { xp: 0, level: 1 };
+  }
+
+  // Har message par random XP dena (e.g., 15 to 25 XP)
+  const xpToAdd = Math.floor(Math.random() * 11) + 15;
+  levels[userId].xp += xpToAdd;
+
+  // Level up requirement formula: Level * 100 XP
+  const neededXp = levels[userId].level * 100;
+  if (levels[userId].xp >= neededXp) {
+    levels[userId].level += 1;
+    levels[userId].xp = 0;
+    message.channel.endswith?.();
+    message.channel.send(`🎉 Badhai ho ${message.author}, aapka level badh kar **Level ${levels[userId].level}** ho gaya hai!`);
+  }
+});
+
+client.on(Events.InteractionCreate, async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   const command = client.commands.get(interaction.commandName);
@@ -80,4 +105,6 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-client.login(process.env.BOT_TOKEN);
+if (process.env.BOT_TOKEN) {
+  client.login(process.env.BOT_TOKEN);
+}
