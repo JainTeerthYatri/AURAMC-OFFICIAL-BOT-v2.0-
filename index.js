@@ -48,7 +48,7 @@ const commands = [];
 
 const userEconomy = new Map();
 const userXp = new Map();
-const serverSettings = new Map();
+const serverSettings = new Map(); // guildId -> { antinuke, verifiedRoleId, statusChannelId, logChannelId }
 
 function getUserData(userId) {
   if (!userEconomy.has(userId)) {
@@ -75,7 +75,7 @@ function checkMinecraftServer(host, port, timeout = 3000) {
   });
 }
 
-// ================= ALL 13 COMMANDS BUILDERS =================
+// ================= ALL COMMANDS BUILDERS =================
 const allCommands = [
   new SlashCommandBuilder().setName('ping').setDescription('Check bot latency and response time'),
   new SlashCommandBuilder().setName('coinflip').setDescription('Flip a coin (Heads or Tails)'),
@@ -91,7 +91,18 @@ const allCommands = [
   new SlashCommandBuilder().setName('rank').setDescription('Check your current chat rank and XP').addUserOption(opt => opt.setName('user').setDescription('User to check').setRequired(false)),
   new SlashCommandBuilder().setName('nuke').setDescription('Deletes and clones the current channel to wipe all messages instantly').setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   new SlashCommandBuilder().setName('antinuke').setDescription('Enable or disable anti-nuke server protection').addStringOption(opt => opt.setName('status').setDescription('Turn Anti-Nuke On or Off').setRequired(true).addChoices({ name: 'Enable', value: 'on' }, { name: 'Disable', value: 'off' })).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-  new SlashCommandBuilder().setName('verify-setup').setDescription('Deploys the verification panel button').addRoleOption(opt => opt.setName('role').setDescription('The role to give when users verify themselves').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+  new SlashCommandBuilder().setName('verify-setup').setDescription('Deploys the verification panel button').addRoleOption(opt => opt.setName('role').setDescription('The role to give when users verify themselves').setRequired(true)).setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+  
+  // NEW COMMANDS FOR AUTO-STATUS & LOGS MANAGEMENT
+  new SlashCommandBuilder()
+    .setName('autostatus')
+    .setDescription('Set this channel to auto-update Minecraft server status every 5 minutes')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+
+  new SlashCommandBuilder()
+    .setName('serverlog')
+    .setDescription('Set this channel to manage and receive server logs/chat bridge updates')
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
 ];
 
 for (const cmd of allCommands) {
@@ -108,19 +119,39 @@ client.once('ready', async () => {
     console.error(error);
   }
 
-  // ================= 5-MINUTE AUTO STATUS REFRESHER =================
+  // ================= 5-MINUTE AUTO STATUS REFRESHER LOOP =================
   setInterval(async () => {
     if (!fs.existsSync(configPath)) return;
     try {
       const config = JSON.parse(fs.readFileSync(configPath));
       const isOnline = await checkMinecraftServer(config.ip, parseInt(config.port || '25565'));
-      console.log(`[Auto-Checker] Server ${config.fullAddress} is currently: ${isOnline ? 'ONLINE 🟢' : 'OFFLINE 🔴'}`);
-      
-      // Yahan agar aap chahe toh kisi specific channel ki ID par embed auto-update karwa sakte hain
+
+      const embed = new EmbedBuilder()
+        .setColor(isOnline ? '#57F287' : '#ED4245')
+        .setTitle(isOnline ? '🟢 AURAMC Server Status : ONLINE' : '🔴 AURAMC Server Status : OFFLINE')
+        .addFields(
+          { name: '🔗 Address', value: `\`${config.fullAddress}\``, inline: true },
+          { name: '📊 Description', value: `*${config.description || 'Live Monitoring'}*`, inline: false }
+        )
+        .setTimestamp();
+
+      // Sabhi guilds ke configured status channels par embed auto-update karna[cite: 10]
+      for (const [guildId, settings] of serverSettings.entries()) {
+        if (settings.statusChannelId) {
+          const guild = client.guilds.cache.get(guildId);
+          if (guild) {
+            const channel = guild.channels.cache.get(settings.statusChannelId);
+            if (channel) {
+              // Purane messages clear karke naya status bhej sakte hain ya pin kar sakte hain
+              await channel.send({ embeds: [embed] }).catch(() => {});
+            }
+          }
+        }
+      }
     } catch (err) {
       console.error('Auto status check error:', err);
     }
-  }, 5 * 60 * 1000); // Har 5 minute mein run hoga
+  }, 5 * 60 * 1000); // Har 5 minute[cite: 10]
 });
 
 // ================= INTERACTION HANDLER =================
@@ -235,6 +266,18 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder().setColor('#57F287').setTitle('🛡️ Server Verification').setDescription('Click the button below to verify yourself!');
         await channel.send({ embeds: [embed], components: [row] });
         await interaction.reply({ content: '✅ Verification panel deployed!', ephemeral: true });
+      }
+      // AUTO-STATUS COMMAND HANDLER[cite: 10]
+      else if (commandName === 'autostatus') {
+        if (!serverSettings.has(guild.id)) serverSettings.set(guild.id, {});
+        serverSettings.get(guild.id).statusChannelId = channel.id;
+        await interaction.reply({ content: `✅ Successfully set ${channel} as the 5-minute automated server status update channel!`, ephemeral: true });
+      }
+      // SERVER LOG COMMAND HANDLER[cite: 10]
+      else if (commandName === 'serverlog') {
+        if (!serverSettings.has(guild.id)) serverSettings.set(guild.id, {});
+        serverSettings.get(guild.id).logChannelId = channel.id;
+        await interaction.reply({ content: `✅ Successfully set ${channel} as the Minecraft server logs and management channel!`, ephemeral: true });
       }
     } 
     else if (interaction.isButton()) {
