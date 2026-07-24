@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * AURAMC ENTERPRISE NETWORK ENGINE - v6.0 [ULTRA-PRO-MAX STORE & INVENTORY BUILD]
+ * AURAMC ENTERPRISE NETWORK ENGINE - v6.1 [UNIVERSAL DM & SERVER BUILD]
  * ============================================================================
  * Architecture: Discord.js v14 Enterprise Core
- * Features: Telemetry, Autonomous Economy, RPG Shop, Auto-Role, Inventory Management (Sell/Throw),
- * Real-Currency Coin Store, Casino Minigames, Global Leveling & Admin Core.
+ * Features: DM & Server Dual-Support, Autonomous Economy, RPG Shop, Auto-Role, 
+ * Inventory Management (Sell/Throw), Real-Currency Coin Store, Casino, Leveling.
  */
 
 const { 
@@ -35,10 +35,10 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send(`
   <html>
-    <head><title>AuraMC Engine v6.0</title></head>
+    <head><title>AuraMC Engine v6.1</title></head>
     <body style="background:#121212;color:#00ffcc;font-family:monospace;text-align:center;padding-top:50px;">
-      <h1>[AURAMC CORE ENGINE v6.0]</h1>
-      <p>Status: ONLINE // Node Cluster Operational</p>
+      <h1>[AURAMC CORE ENGINE v6.1]</h1>
+      <p>Status: ONLINE // Universal DM & Server Routing Operational</p>
     </body>
   </html>
 `));
@@ -51,6 +51,7 @@ const client = new Client({
     GatewayIntentBits.GuildMessages,
     GatewayIntentBits.MessageContent,
     GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.DirectMessages,
   ],
 });
 
@@ -112,7 +113,7 @@ function generateProgressBar(current, max, length = 15) {
 function getBaseEmbed(interaction = null, color = '#2b2d31') {
   const embed = new EmbedBuilder().setColor(color).setTimestamp();
   if (interaction && client.user) {
-    embed.setFooter({ text: 'AuraMC Enterprise Protocol // Core v6.0', iconURL: client.user.displayAvatarURL() });
+    embed.setFooter({ text: 'AuraMC Enterprise Protocol // Core v6.1', iconURL: client.user.displayAvatarURL() });
   }
   return embed;
 }
@@ -149,14 +150,14 @@ function calculateHand(hand) {
   return val;
 }
 
-// ================= COMMAND MANIFEST (25 PROTOCOLS) =================
+// ================= COMMAND MANIFEST =================
 const commands = [
   new SlashCommandBuilder().setName('help').setDescription('Access the Ultra-Pro interactive command manual'),
   new SlashCommandBuilder().setName('server').setDescription('Fetch live diagnostics of the primary AuraMC game cluster'),
-  new SlashCommandBuilder().setName('setup-server').setDescription('Bind a remote Minecraft address to telemetry nodes (Admin)'),
-  new SlashCommandBuilder().setName('autostatus').setDescription('Designate this channel for live 24/7 telemetry feeds (Admin)'),
+  new SlashCommandBuilder().setName('setup-server').setDescription('Bind a remote Minecraft address to telemetry nodes (Admin - Server Only)'),
+  new SlashCommandBuilder().setName('autostatus').setDescription('Designate this channel for live 24/7 telemetry feeds (Admin - Server Only)'),
   new SlashCommandBuilder().setName('botinfo').setDescription('Inspect core engine performance and host hardware metrics'),
-  new SlashCommandBuilder().setName('suggest').setDescription('Transmit a community proposal to the developers').addStringOption(o => o.setName('idea').setDescription('Your suggestion text').setRequired(true)),
+  new SlashCommandBuilder().setName('suggest').setDescription('Transmit a community proposal to the developers (Server Only)').addStringOption(o => o.setName('idea').setDescription('Your suggestion text').setRequired(true)),
 
   new SlashCommandBuilder().setName('balance').setDescription('Examine your financial portfolio assets').addUserOption(o => o.setName('user').setDescription('Target user profile').setRequired(false)),
   new SlashCommandBuilder().setName('deposit').setDescription('Secure funds into your banking vault').addIntegerOption(o => o.setName('amount').setDescription('Amount to transfer').setRequired(true)),
@@ -166,7 +167,7 @@ const commands = [
   new SlashCommandBuilder().setName('work').setDescription('Perform cybersecurity and engineering tasks for income'),
   new SlashCommandBuilder().setName('pay').setDescription('Wire transfer funds to another network user').addUserOption(o => o.setName('user').setDescription('Recipient user').setRequired(true)).addIntegerOption(o => o.setName('amount').setDescription('Amount to transfer').setRequired(true)),
   new SlashCommandBuilder().setName('rob').setDescription('Initiate a high-risk security breach on a user wallet').addUserOption(o => o.setName('target').setDescription('Target profile').setRequired(true)),
-  new SlashCommandBuilder().setName('give').setDescription('Inject system currency into a user wallet (Admin Only)').addUserOption(o => o.setName('user').setDescription('Recipient user').setRequired(true)).addIntegerOption(o => o.setName('amount').setDescription('Amount to inject').setRequired(true)),
+  new SlashCommandBuilder().setName('give').setDescription('Inject system currency into a user wallet (Admin - Server Only)').addUserOption(o => o.setName('user').setDescription('Recipient user').setRequired(true)).addIntegerOption(o => o.setName('amount').setDescription('Amount to inject').setRequired(true)),
   new SlashCommandBuilder().setName('leaderboard').setDescription('View the Top 10 richest tycoons on the network'),
 
   new SlashCommandBuilder().setName('shop').setDescription('Browse the AuraMC secure black-market catalog'),
@@ -184,11 +185,11 @@ const commands = [
 
 // ================= SYSTEM BOOT & TELEMETRY DAEMON =================
 client.once(Events.ClientReady, async () => {
-  console.log(`[SYSTEM BOOT] Engine v6.0 active as ${client.user.tag}`);
+  console.log(`[SYSTEM BOOT] Engine v6.1 active as ${client.user.tag}`);
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
   try {
     await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log('[REGISTRY] Successfully synced 25 Enterprise Slash Commands.');
+    console.log('[REGISTRY] Successfully synced 25 Universal Slash Commands.');
   } catch (error) {
     console.error('[CRITICAL ERROR] Failed to sync commands:', error);
   }
@@ -256,7 +257,7 @@ client.on(Events.MessageCreate, async message => {
   }
 });
 
-// ================= ULTRA-PRO INTERACTION HANDLER =================
+// ================= UNIVERSAL INTERACTION HANDLER =================
 client.on(Events.InteractionCreate, async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
@@ -269,12 +270,12 @@ client.on(Events.InteractionCreate, async interaction => {
     if (commandName === 'help') {
       const embed = getBaseEmbed(interaction, '#00ffcc')
         .setTitle('🛡️ AURAMC ENTERPRISE - INTERACTIVE MANUAL')
-        .setDescription('>>> Welcome to the high-performance command reference directory.')
+        .setDescription('>>> Available in both **Direct Messages (DM)** and **Discord Servers**!')
         .addFields(
-          { name: '🌐 Minecraft & Infrastructure', value: '`/server` - Live game server diagnostics\n`/setup-server` - Bind node IP/Port\n`/autostatus` - Deploy autonomous telemetry feed\n`/botinfo` - Check host hardware & resource usage\n`/suggest` - Transmit proposals', inline: false },
-          { name: '💳 Autonomous Economy Matrix', value: '`/balance` - View liquid & vaulted assets\n`/deposit` & `/withdraw` - Vault management\n`/daily` / `/weekly` - Claim stipends\n`/work` - Execute contracts\n`/pay` - Wire transfers\n`/rob` - Unauthorized vault breach\n`/give` - Admin capital injection\n`/leaderboard` - Forbes top asset holders', inline: false },
-          { name: '🛒 Black-Market & Store', value: '`/shop` - Browse catalog (VIP Status: `$1,000,000`)\n`/buy` - Procure assets (Auto-role for VIP)\n`/inventory` - Inspect secured vault\n`/sell` - Sell item for 50% refund\n`/throw` - Discard item\n`/store` - Official INR Currency Shop (₹8 to ₹100)', inline: false },
-          { name: '🎰 High-Stakes Casino', value: '`/slots` - Spin reels for payouts\n`/blackjack` - Interactive tactical 21 card game', inline: false },
+          { name: '🌐 Minecraft & Infrastructure', value: '`/server` - Live game server diagnostics\n`/setup-server` - Bind node IP (Server Only)\n`/autostatus` - Deploy telemetry feed (Server Only)\n`/botinfo` - Check host hardware & resource usage\n`/suggest` - Transmit proposals (Server Only)', inline: false },
+          { name: '💳 Autonomous Economy Matrix', value: '`/balance`, `/deposit`, `/withdraw`, `/daily`, `/weekly`, `/work`, `/pay`, `/rob`, `/give` (Admin), `/leaderboard`', inline: false },
+          { name: '🛒 Black-Market & Store', value: '`/shop` - Browse catalog (VIP requires Server for role)\n`/buy` - Procure assets\n`/inventory` - Inspect secured vault\n`/sell` - Sell item for 50% refund\n`/throw` - Discard item\n`/store` - Official INR Currency Shop (₹8 to ₹100)', inline: false },
+          { name: '🎰 High-Stakes Casino', value: '`/slots` - Spin reels\n`/blackjack` - Interactive 21 card game', inline: false },
           { name: '🎖️ Clearance & Social', value: '`/rank` - Inspect global user clearance level and XP bar', inline: false }
         )
         .setThumbnail(client.user.displayAvatarURL());
@@ -287,14 +288,14 @@ client.on(Events.InteractionCreate, async interaction => {
     else if (commandName === 'server') {
       await interaction.deferReply();
       if (!fs.existsSync(configPath)) {
-        return interaction.editReply({ embeds: [getBaseEmbed(interaction, '#ED4245').setTitle('⚠️ Configuration Fault').setDescription('>>> Telemetry endpoint unassigned. Execute **`/setup-server`** first.')] });
+        return interaction.editReply({ embeds: [getBaseEmbed(interaction, '#ED4245').setTitle('⚠️ Configuration Fault').setDescription('>>> Telemetry endpoint unassigned. Execute **`/setup-server`** inside a server first.')] });
       }
       const config = JSON.parse(fs.readFileSync(configPath));
       const status = await checkMinecraftServer(config.ip, parseInt(config.port || '25565'));
 
       const embed = getBaseEmbed(interaction, status.online ? '#57F287' : '#ED4245')
         .setTitle('🌐 AURAMC GAME NODE STATUS')
-        .setThumbnail(guild.iconURL() || client.user.displayAvatarURL())
+        .setThumbnail(guild?.iconURL() || client.user.displayAvatarURL())
         .setDescription(`>>> **Node Status:** ${status.online ? '🟢 **ONLINE & RESPONSIVE**' : '🔴 **OFFLINE // UNREACHABLE**'}\n*${config.description || 'Welcome to AuraMC Network!'}*`)
         .addFields(
           { name: '📥 Target Address', value: `\`\`\`yaml\n${config.fullAddress}\`\`\``, inline: false },
@@ -305,6 +306,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     else if (commandName === 'setup-server' || commandName === 'autostatus') {
+      if (!guild) return interaction.reply({ content: '❌ Yeh command sirf kisi Discord server ke andar use ki ja sakti hai!', ephemeral: true });
       if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({ content: '❌ Access Denied: Administrator security clearance required.', ephemeral: true });
       }
@@ -341,6 +343,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     else if (commandName === 'suggest') {
+      if (!guild) return interaction.reply({ content: '❌ Yeh command sirf kisi Discord server ke andar use ki ja sakti hai!', ephemeral: true });
       const idea = options.getString('idea');
       const embed = getBaseEmbed(interaction, '#9B59B6')
         .setAuthor({ name: `${user.username}'s Proposal Matrix`, iconURL: user.displayAvatarURL() })
@@ -432,10 +435,11 @@ client.on(Events.InteractionCreate, async interaction => {
       const jobs = ['patched a critical zero-day exploit', 'mined a rich vein of Netherite debris', 'configured a distributed BungeeCord cluster', 'compiled a high-performance Java plugin'];
       eco.wallet += wage;
       
-      await interaction.reply({ embeds: [getBaseEmbed(interaction, '#57F287').setTitle('💼 SHIFT COMPLETED').setDescription(`>>> You ${jobs[Math.floor(Math.random() * jobs.length)]} and earned **$ ${wage.toLocaleString()}**.\n**Wallet Balance:** \`$ ${eco.wallet.toLocaleString()}\``)] });
+      await interaction.reply({ embeds: [getBaseEmbed(interaction, '#57F287').setTitle('SHIFT COMPLETED').setDescription(`>>> You ${jobs[Math.floor(Math.random() * jobs.length)]} and earned **$ ${wage.toLocaleString()}**.\n**Wallet Balance:** \`$ ${eco.wallet.toLocaleString()}\``)] });
     }
 
     else if (commandName === 'give') {
+      if (!guild) return interaction.reply({ content: '❌ Yeh command sirf kisi Discord server ke andar use ki ja sakti hai!', ephemeral: true });
       if (!interaction.member.permissions.has(PermissionFlagsBits.Administrator)) {
         return interaction.reply({ content: '❌ Access Denied: Administrator clearance required.', ephemeral: true });
       }
@@ -491,7 +495,11 @@ client.on(Events.InteractionCreate, async interaction => {
       const inv = getInv(user.id);
       if (inv.includes(item.id)) return interaction.reply({ content: '❌ You already own this digital asset.', ephemeral: true });
       
+      // VIP Purchase Role Check & Assignment
       if (item.id === 'vip_rank') {
+        if (!guild) {
+          return interaction.reply({ embeds: [getBaseEmbed(interaction, '#ED4245').setDescription('>>> ❌ VIP status khareedne ke liye aapko bot ke sath **server** ke andar command chalani hogi, taaki bot aapko VIP role assign kar sake!')], ephemeral: true });
+        }
         const roleName = 'VIP';
         const role = guild.roles.cache.find(r => r.name === roleName);
         if (!role) {
@@ -540,8 +548,8 @@ client.on(Events.InteractionCreate, async interaction => {
       const refund = Math.floor(item.price / 2); // 50% refund
       const eco = getEco(user.id);
 
-      // If selling VIP, remove role from user
-      if (itemId === 'vip_rank') {
+      // If selling VIP, remove role from user if in server
+      if (itemId === 'vip_rank' && guild) {
         const role = guild.roles.cache.find(r => r.name === 'VIP');
         if (role) {
           try {
@@ -571,8 +579,8 @@ client.on(Events.InteractionCreate, async interaction => {
 
       const item = shopItems.find(i => i.id === itemId);
 
-      // If throwing VIP, remove role from user
-      if (itemId === 'vip_rank') {
+      // If throwing VIP, remove role from user if in server
+      if (itemId === 'vip_rank' && guild) {
         const role = guild.roles.cache.find(r => r.name === 'VIP');
         if (role) {
           try {
@@ -738,7 +746,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       const storeEmbed = getBaseEmbed(interaction, '#57F287')
         .setTitle('💳 CHECKOUT & PAYMENT INSTRUCTIONS')
-        .setDescription(`>>> You selected **${packageName}** for **${packagePrice}**.\n\n**Step 1:** Pay via UPI (Google Pay / PhonePe / Paytm) to Admin UPI ID: \`atishay11@fam\`\n**Step 2:** Send the payment screenshot to server admins.\n**Step 3:** Admin will verify and inject **${coinAmount.toLocaleString()} Coins** into your wallet using \`/give\`.`);
+        .setDescription(`>>> You selected **${packageName}** for **${packagePrice}**.\n\n**Step 1:** Pay via UPI (Google Pay / PhonePe / Paytm) to Admin UPI ID: \`your-upi-id@paytm\`\n**Step 2:** Send the payment screenshot to server admins.\n**Step 3:** Admin will verify and inject **${coinAmount.toLocaleString()} Coins** into your wallet using \`/give\`.`);
       
       await interaction.reply({ embeds: [storeEmbed], ephemeral: true });
     }
