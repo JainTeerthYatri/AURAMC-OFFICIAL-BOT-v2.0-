@@ -140,7 +140,7 @@ client.once('ready', async () => {
     } catch (err) {
       console.error('Auto status check error:', err);
     }
-  }, 5 * 60 * 1000);[cite: 10]
+  }, 5 * 60 * 1000);
 });
 
 client.on('interactionCreate', async interaction => {
@@ -171,7 +171,6 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder().setColor('#9932CC').setTitle('🎱 Magic 8-Ball').addFields({ name: 'Sawal:', value: question }, { name: 'Jawab:', value: answers[Math.floor(Math.random() * answers.length)] });
         await interaction.reply({ embeds: [embed] });
       }
-      // PRECISE & PROFESSIONAL SERVER UI RESTORED
       else if (commandName === 'server') {
         await interaction.deferReply();
         if (!fs.existsSync(configPath)) {
