@@ -116,14 +116,15 @@ client.once('ready', async () => {
       const isOnline = await checkMinecraftServer(config.ip, parseInt(config.port || '25565'));
 
       const embed = new EmbedBuilder()
-        .setColor(isOnline ? '#57F287' : '#ED4245')
-        .setTitle(isOnline ? '🟢 AURAMC Server Status : ONLINE' : '🔴 AURAMC Server Status : OFFLINE')
-        .setDescription(`> *${config.description || 'Server is up and running smoothly!'}*`)
+        .setColor(isOnline ? '#2b2d31' : '#2b2d31') // Sleek dark aesthetic sidebar
+        .setTitle('🌐 AURAMC NETWORK STATUS')
+        .setDescription(`>>> **Status:** ${isOnline ? '🟢 **ONLINE**' : '🔴 **OFFLINE**'}\n\n*${config.description || 'Official AURAMC Minecraft Server'}*`)
         .addFields(
-          { name: '🔗 Server Address', value: `\`${config.fullAddress}\``, inline: true },
-          { name: '👥 Active Players', value: '`Live & Connected`', inline: true },
-          { name: '🛡️ Protocol', value: '`TCP Direct`', inline: true }
+          { name: '📥 Server IP', value: `\`${config.fullAddress}\``, inline: false },
+          { name: '⚡ Connection', value: '`TCP / Direct`', inline: true },
+          { name: '🔄 Auto-Refresh', value: '`Every 5 mins`', inline: true }
         )
+        .setFooter({ text: 'AURAMC Live Telemetry System', iconURL: client.user.displayAvatarURL() })
         .setTimestamp();
 
       for (const [guildId, settings] of serverSettings.entries()) {
@@ -171,6 +172,7 @@ client.on('interactionCreate', async interaction => {
         const embed = new EmbedBuilder().setColor('#9932CC').setTitle('🎱 Magic 8-Ball').addFields({ name: 'Sawal:', value: question }, { name: 'Jawab:', value: answers[Math.floor(Math.random() * answers.length)] });
         await interaction.reply({ embeds: [embed] });
       }
+      // ULTRA-MODERN PREMIUM GAMING UI FOR /server
       else if (commandName === 'server') {
         await interaction.deferReply();
         if (!fs.existsSync(configPath)) {
@@ -179,26 +181,19 @@ client.on('interactionCreate', async interaction => {
         const config = JSON.parse(fs.readFileSync(configPath));
         const isOnline = await checkMinecraftServer(config.ip, parseInt(config.port || '25565'));
 
-        if (isOnline) {
-          const onlineEmbed = new EmbedBuilder()
-            .setColor('#57F287')
-            .setTitle('🟢 AURAMC Server Status : ONLINE')
-            .setDescription(`> *${config.description || 'Server is up and running smoothly!'}*`)
-            .addFields(
-              { name: '🔗 Server Address', value: `\`${config.fullAddress}\``, inline: true },
-              { name: '👥 Active Players', value: '`Live & Connected`', inline: true },
-              { name: '🛡️ Protocol', value: '`TCP Direct`', inline: true }
-            )
-            .setTimestamp();
-          await interaction.editReply({ embeds: [onlineEmbed] });
-        } else {
-          const offlineEmbed = new EmbedBuilder()
-            .setColor('#ED4245')
-            .setTitle('🔴 AURAMC Server Status : OFFLINE')
-            .setDescription('Server is currently offline, stopped, or unreachable over the network.')
-            .setTimestamp();
-          await interaction.editReply({ embeds: [offlineEmbed] });
-        }
+        const embed = new EmbedBuilder()
+          .setColor(isOnline ? '#57F287' : '#ED4245')
+          .setTitle('🌐 AURAMC GAME SERVER STATUS')
+          .setDescription(`>>> **Current State:** ${isOnline ? '🟢 **ONLINE & STABLE**' : '🔴 **OFFLINE / UNREACHABLE**'}\n\n*${config.description || 'Welcome to AURAMC Network!'}*`)
+          .addFields(
+            { name: '📥 Direct Server IP', value: `\`\`\`yaml\n${config.fullAddress}\`\`\``, inline: false },
+            { name: '🟢 Status', value: isOnline ? '`Operational`' : '`Down`', inline: true },
+            { name: '🛡️ Protocol', value: '`TCP Standard`', inline: true }
+          )
+          .setFooter({ text: 'Requested by ' + interaction.user.tag, iconURL: interaction.user.displayAvatarURL() })
+          .setTimestamp();
+
+        await interaction.editReply({ embeds: [embed] });
       }
       else if (commandName === 'setup-server') {
         const embed = new EmbedBuilder().setColor('#2b2d31').setTitle('⚙️ AURAMC Server Setup Center').setDescription('Apne Minecraft server ko live track karne ke liye neeche diye gaye button par click karein.');
