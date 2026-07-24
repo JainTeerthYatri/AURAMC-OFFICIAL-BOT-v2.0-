@@ -738,7 +738,7 @@ client.on(Events.InteractionCreate, async interaction => {
 
       const storeEmbed = getBaseEmbed(interaction, '#57F287')
         .setTitle('💳 CHECKOUT & PAYMENT INSTRUCTIONS')
-        .setDescription(`>>> You selected **${packageName}** for **${packagePrice}**.\n\n**Step 1:** Pay via UPI (Google Pay / PhonePe / Paytm) to Admin UPI ID: \`your-upi-id@paytm\`\n**Step 2:** Send the payment screenshot to server admins.\n**Step 3:** Admin will verify and inject **${coinAmount.toLocaleString()} Coins** into your wallet using \`/give\`.`);
+        .setDescription(`>>> You selected **${packageName}** for **${packagePrice}**.\n\n**Step 1:** Pay via UPI (Google Pay / PhonePe / Paytm) to Admin UPI ID: \`atishay11@fam\`\n**Step 2:** Send the payment screenshot to server admins.\n**Step 3:** Admin will verify and inject **${coinAmount.toLocaleString()} Coins** into your wallet using \`/give\`.`);
       
       await interaction.reply({ embeds: [storeEmbed], ephemeral: true });
     }
