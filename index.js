@@ -1,10 +1,10 @@
 /**
  * ============================================================================
- * AURAMC ENTERPRISE NETWORK ENGINE - v5.0 [ULTRA-PRO-MAX BUILD]
+ * AURAMC ENTERPRISE NETWORK ENGINE - v6.0 [ULTRA-PRO-MAX STORE & INVENTORY BUILD]
  * ============================================================================
  * Architecture: Discord.js v14 Enterprise Core
- * Features: High-End Telemetry, Autonomous Economy, RPG Marketplace with Auto-Role,
- * Advanced Blackjack & Slots Casino, Global Leveling, and Administrative Core.
+ * Features: Telemetry, Autonomous Economy, RPG Shop, Auto-Role, Inventory Management (Sell/Throw),
+ * Real-Currency Coin Store, Casino Minigames, Global Leveling & Admin Core.
  */
 
 const { 
@@ -35,9 +35,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 app.get('/', (req, res) => res.send(`
   <html>
-    <head><title>AuraMC Engine v5.0</title></head>
+    <head><title>AuraMC Engine v6.0</title></head>
     <body style="background:#121212;color:#00ffcc;font-family:monospace;text-align:center;padding-top:50px;">
-      <h1>[AURAMC CORE ENGINE v5.0]</h1>
+      <h1>[AURAMC CORE ENGINE v6.0]</h1>
       <p>Status: ONLINE // Node Cluster Operational</p>
     </body>
   </html>
@@ -112,7 +112,7 @@ function generateProgressBar(current, max, length = 15) {
 function getBaseEmbed(interaction = null, color = '#2b2d31') {
   const embed = new EmbedBuilder().setColor(color).setTimestamp();
   if (interaction && client.user) {
-    embed.setFooter({ text: 'AuraMC Enterprise Protocol // Core v5.0', iconURL: client.user.displayAvatarURL() });
+    embed.setFooter({ text: 'AuraMC Enterprise Protocol // Core v6.0', iconURL: client.user.displayAvatarURL() });
   }
   return embed;
 }
@@ -149,7 +149,7 @@ function calculateHand(hand) {
   return val;
 }
 
-// ================= COMMAND MANIFEST (22 PROTOCOLS) =================
+// ================= COMMAND MANIFEST (25 PROTOCOLS) =================
 const commands = [
   new SlashCommandBuilder().setName('help').setDescription('Access the Ultra-Pro interactive command manual'),
   new SlashCommandBuilder().setName('server').setDescription('Fetch live diagnostics of the primary AuraMC game cluster'),
@@ -172,6 +172,9 @@ const commands = [
   new SlashCommandBuilder().setName('shop').setDescription('Browse the AuraMC secure black-market catalog'),
   new SlashCommandBuilder().setName('buy').setDescription('Purchase elite items or VIP status').addStringOption(o => o.setName('item_id').setDescription('Target item identifier').setRequired(true)),
   new SlashCommandBuilder().setName('inventory').setDescription('Inspect your personal secured digital asset vault'),
+  new SlashCommandBuilder().setName('sell').setDescription('Sell an owned item from inventory for 50% cash refund').addStringOption(o => o.setName('item_id').setDescription('Item ID to sell').setRequired(true)),
+  new SlashCommandBuilder().setName('throw').setDescription('Discard/throw away an item from your inventory').addStringOption(o => o.setName('item_id').setDescription('Item ID to throw').setRequired(true)),
+  new SlashCommandBuilder().setName('store').setDescription('View official real-currency (INR) coin packages'),
 
   new SlashCommandBuilder().setName('slots').setDescription('Wager currency on the automated casino slot machine').addIntegerOption(o => o.setName('bet').setDescription('Wager amount').setRequired(true)),
   new SlashCommandBuilder().setName('blackjack').setDescription('Engage in high-stakes 21 against the digital croupier').addIntegerOption(o => o.setName('bet').setDescription('Wager amount').setRequired(true)),
@@ -181,11 +184,11 @@ const commands = [
 
 // ================= SYSTEM BOOT & TELEMETRY DAEMON =================
 client.once(Events.ClientReady, async () => {
-  console.log(`[SYSTEM BOOT] Engine v5.0 active as ${client.user.tag}`);
+  console.log(`[SYSTEM BOOT] Engine v6.0 active as ${client.user.tag}`);
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
   try {
     await rest.put(Routes.applicationCommands(client.user.id), { body: commands });
-    console.log('[REGISTRY] Successfully synced 22 Enterprise Slash Commands.');
+    console.log('[REGISTRY] Successfully synced 25 Enterprise Slash Commands.');
   } catch (error) {
     console.error('[CRITICAL ERROR] Failed to sync commands:', error);
   }
@@ -266,12 +269,12 @@ client.on(Events.InteractionCreate, async interaction => {
     if (commandName === 'help') {
       const embed = getBaseEmbed(interaction, '#00ffcc')
         .setTitle('🛡️ AURAMC ENTERPRISE - INTERACTIVE MANUAL')
-        .setDescription('>>> Welcome to the high-performance command reference directory. All systems operate on isolated secure threads.')
+        .setDescription('>>> Welcome to the high-performance command reference directory.')
         .addFields(
-          { name: '🌐 Minecraft & Infrastructure', value: '`/server` - Live game server cluster diagnostics\n`/setup-server` - Securely bind target node IP/Port\n`/autostatus` - Deploy autonomous telemetry feed\n`/botinfo` - Check host hardware & resource usage\n`/suggest` - Transmit proposals with rating feeds', inline: false },
-          { name: '💳 Autonomous Economy Matrix', value: '`/balance` - View liquid & vaulted asset sheets\n`/deposit` & `/withdraw` - Bank vault management\n`/daily` / `/weekly` - Claim stipends\n`/work` - Execute network engineering contracts\n`/pay` - Secure wire transfers\n`/rob` - Unauthorized vault breach attempt\n`/give` - Admin capital injection protocol\n`/leaderboard` - Forbes top asset holders', inline: false },
-          { name: '🛒 Black-Market RPG Shop', value: '`/shop` - Browse elite inventory catalog (VIP Status: `$1,000,000`)\n`/buy` - Procure assets (Auto-assigns Discord role for VIP!)\n`/inventory` - Inspect personal storage container', inline: false },
-          { name: '🎰 High-Stakes Casino', value: '`/slots` - Spin automated reels for payouts\n`/blackjack` - Interactive tactical 21 card game', inline: false },
+          { name: '🌐 Minecraft & Infrastructure', value: '`/server` - Live game server diagnostics\n`/setup-server` - Bind node IP/Port\n`/autostatus` - Deploy autonomous telemetry feed\n`/botinfo` - Check host hardware & resource usage\n`/suggest` - Transmit proposals', inline: false },
+          { name: '💳 Autonomous Economy Matrix', value: '`/balance` - View liquid & vaulted assets\n`/deposit` & `/withdraw` - Vault management\n`/daily` / `/weekly` - Claim stipends\n`/work` - Execute contracts\n`/pay` - Wire transfers\n`/rob` - Unauthorized vault breach\n`/give` - Admin capital injection\n`/leaderboard` - Forbes top asset holders', inline: false },
+          { name: '🛒 Black-Market & Store', value: '`/shop` - Browse catalog (VIP Status: `$1,000,000`)\n`/buy` - Procure assets (Auto-role for VIP)\n`/inventory` - Inspect secured vault\n`/sell` - Sell item for 50% refund\n`/throw` - Discard item\n`/store` - Official INR Currency Shop (₹8 to ₹100)', inline: false },
+          { name: '🎰 High-Stakes Casino', value: '`/slots` - Spin reels for payouts\n`/blackjack` - Interactive tactical 21 card game', inline: false },
           { name: '🎖️ Clearance & Social', value: '`/rank` - Inspect global user clearance level and XP bar', inline: false }
         )
         .setThumbnail(client.user.displayAvatarURL());
@@ -465,7 +468,7 @@ client.on(Events.InteractionCreate, async interaction => {
     }
 
     // --------------------------------------------------------
-    // RPG SHOP & AUTO-ROLE BUY SYSTEM (1M VIP)
+    // RPG SHOP, INVENTORY, SELL & THROW (AUTO-ROLE SYNC)
     // --------------------------------------------------------
     else if (commandName === 'shop') {
       let desc = '>>> Welcome to the secure black-market terminal. Use `/buy <item_id>` to acquire items.\n\n';
@@ -488,15 +491,12 @@ client.on(Events.InteractionCreate, async interaction => {
       const inv = getInv(user.id);
       if (inv.includes(item.id)) return interaction.reply({ content: '❌ You already own this digital asset.', ephemeral: true });
       
-      // Auto-Role Integration for VIP Status
       if (item.id === 'vip_rank') {
         const roleName = 'VIP';
         const role = guild.roles.cache.find(r => r.name === roleName);
-        
         if (!role) {
           return interaction.reply({ embeds: [getBaseEmbed(interaction, '#ED4245').setDescription(`>>> ❌ Configuration Error: Server par **"${roleName}"** naam ka role nahi mila! Pehle Discord mein ye role create karo.`)], ephemeral: true });
         }
-        
         try {
           const member = await guild.members.fetch(user.id);
           await member.roles.add(role);
@@ -522,9 +522,93 @@ client.on(Events.InteractionCreate, async interaction => {
       let desc = '>>> **Authenticated Digital Assets:**\n\n';
       inv.forEach(id => {
         const item = shopItems.find(i => i.id === id);
-        if (item) desc += `${item.emoji} **${item.name}** (\`${item.id}\`)\n`;
+        if (item) desc += `${item.emoji} **${item.name}** (\`${id}\`)\n`;
       });
       await interaction.reply({ embeds: [getBaseEmbed(interaction, '#3498DB').setTitle('🎒 PERSONAL INVENTORY VAULT').setDescription(desc)] });
+    }
+
+    else if (commandName === 'sell') {
+      const itemId = options.getString('item_id').toLowerCase();
+      const inv = getInv(user.id);
+      const itemIndex = inv.indexOf(itemId);
+
+      if (itemIndex === -1) {
+        return interaction.reply({ content: '❌ You do not own this item in your inventory.', ephemeral: true });
+      }
+
+      const item = shopItems.find(i => i.id === itemId);
+      const refund = Math.floor(item.price / 2); // 50% refund
+      const eco = getEco(user.id);
+
+      // If selling VIP, remove role from user
+      if (itemId === 'vip_rank') {
+        const role = guild.roles.cache.find(r => r.name === 'VIP');
+        if (role) {
+          try {
+            const member = await guild.members.fetch(user.id);
+            if (member.roles.cache.has(role.id)) await member.roles.remove(role);
+          } catch (e) {}
+        }
+      }
+
+      inv.splice(itemIndex, 1);
+      eco.wallet += refund;
+
+      const embed = getBaseEmbed(interaction, '#57F287')
+        .setTitle('🔄 ITEM SOLD SUCCESSFULLY')
+        .setDescription(`>>> You sold ${item.emoji} **${item.name}** back to the market.\n💸 **Refund Credited:** \`+ $ ${refund.toLocaleString()}\` (50% Value)\n**New Wallet:** \`$ ${eco.wallet.toLocaleString()}\``);
+      await interaction.reply({ embeds: [embed] });
+    }
+
+    else if (commandName === 'throw') {
+      const itemId = options.getString('item_id').toLowerCase();
+      const inv = getInv(user.id);
+      const itemIndex = inv.indexOf(itemId);
+
+      if (itemIndex === -1) {
+        return interaction.reply({ content: '❌ You do not own this item in your inventory.', ephemeral: true });
+      }
+
+      const item = shopItems.find(i => i.id === itemId);
+
+      // If throwing VIP, remove role from user
+      if (itemId === 'vip_rank') {
+        const role = guild.roles.cache.find(r => r.name === 'VIP');
+        if (role) {
+          try {
+            const member = await guild.members.fetch(user.id);
+            if (member.roles.cache.has(role.id)) await member.roles.remove(role);
+          } catch (e) {}
+        }
+      }
+
+      inv.splice(itemIndex, 1);
+
+      const embed = getBaseEmbed(interaction, '#ED4245')
+        .setTitle('🗑️ ITEM DISCARDED')
+        .setDescription(`>>> You threw away ${item.emoji} **${item.name}** into the digital void. No refund was issued.`);
+      await interaction.reply({ embeds: [embed] });
+    }
+
+    else if (commandName === 'store') {
+      const embed = getBaseEmbed(interaction, '#F1C40F')
+        .setTitle('💎 AURAMC REAL-CURRENCY (INR) STORE')
+        .setDescription('>>> Purchase massive coin packages instantly using real currency. Select a package below to get payment instructions.')
+        .addFields(
+          { name: '📦 Tier 1: 50,000 Coins', value: '💸 Price: **₹8**\n👉 Command: `/store` (Click Button Below)', inline: false },
+          { name: '📦 Tier 2: 100,000 Coins', value: '💸 Price: **₹15**\n👉 Command: `/store` (Click Button Below)', inline: false },
+          { name: '📦 Tier 3: 500,000 Coins', value: '💸 Price: **₹60**\n👉 Command: `/store` (Click Button Below)', inline: false },
+          { name: '📦 Tier 4: 1,000,000 Coins (1M)', value: '💸 Price: **₹100**\n👉 Command: `/store` (Click Button Below)', inline: false }
+        );
+
+      const row = new ActionRowBuilder().addComponents(
+        new ButtonBuilder().setCustomId('buy_tier1').setLabel('Buy 50K (₹8)').setStyle(ButtonStyle.Success).setEmoji('💳'),
+        new ButtonBuilder().setCustomId('buy_tier2').setLabel('Buy 100K (₹15)').setStyle(ButtonStyle.Success).setEmoji('💳'),
+        new ButtonBuilder().setCustomId('buy_tier3').setLabel('Buy 500K (₹60)').setStyle(ButtonStyle.Success).setEmoji('💳'),
+        new ButtonBuilder().setCustomId('buy_tier4').setLabel('Buy 1M (₹100)').setStyle(ButtonStyle.Primary).setEmoji('💎')
+      );
+
+      await interaction.reply({ embeds: [embed], components: [row] });
     }
 
     // --------------------------------------------------------
@@ -541,8 +625,8 @@ client.on(Events.InteractionCreate, async interaction => {
       const [s1, s2, s3] = [r(), r(), r()];
       
       let win = 0;
-      if (s1 === s2 && s2 === s3) win = bet * 6; // Mega Jackpot
-      else if (s1 === s2 || s2 === s3 || s1 === s3) win = bet * 2; // Minor Payout
+      if (s1 === s2 && s2 === s3) win = bet * 6;
+      else if (s1 === s2 || s2 === s3 || s1 === s3) win = bet * 2;
       
       eco.wallet += win;
       const embed = getBaseEmbed(interaction, win > 0 ? '#F1C40F' : '#ED4245')
@@ -641,6 +725,24 @@ client.on(Events.InteractionCreate, async interaction => {
       await interaction.showModal(modal);
     }
     
+    // Real Currency Store Buy Buttons Handler
+    else if (['buy_tier1', 'buy_tier2', 'buy_tier3', 'buy_tier4'].includes(interaction.customId)) {
+      let packageName = '';
+      let packagePrice = '';
+      let coinAmount = 0;
+
+      if (interaction.customId === 'buy_tier1') { packageName = 'Tier 1 (50K Coins)'; packagePrice = '₹8'; coinAmount = 50000; }
+      else if (interaction.customId === 'buy_tier2') { packageName = 'Tier 2 (100K Coins)'; packagePrice = '₹15'; coinAmount = 100000; }
+      else if (interaction.customId === 'buy_tier3') { packageName = 'Tier 3 (500K Coins)'; packagePrice = '₹60'; coinAmount = 500000; }
+      else if (interaction.customId === 'buy_tier4') { packageName = 'Tier 4 (1M Coins)'; packagePrice = '₹100'; coinAmount = 1000000; }
+
+      const storeEmbed = getBaseEmbed(interaction, '#57F287')
+        .setTitle('💳 CHECKOUT & PAYMENT INSTRUCTIONS')
+        .setDescription(`>>> You selected **${packageName}** for **${packagePrice}**.\n\n**Step 1:** Pay via UPI (Google Pay / PhonePe / Paytm) to Admin UPI ID: \`your-upi-id@paytm\`\n**Step 2:** Send the payment screenshot to server admins.\n**Step 3:** Admin will verify and inject **${coinAmount.toLocaleString()} Coins** into your wallet using \`/give\`.`);
+      
+      await interaction.reply({ embeds: [storeEmbed], ephemeral: true });
+    }
+
     else if (interaction.customId === 'upvote' || interaction.customId === 'downvote') {
       const msg = interaction.message;
       const row = msg.components[0];
